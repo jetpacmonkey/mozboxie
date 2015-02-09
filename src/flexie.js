@@ -142,6 +142,7 @@ var Flexie = (function (win, doc) {
 
 	    // Global reference objects
 	    FLEX_BOXES = {},
+	    POSSIBLE_FLEX_BOXES = [],
 	    POSSIBLE_FLEX_CHILDREN = [],
 	    DOM_ORDERED,
 
@@ -346,7 +347,7 @@ var Flexie = (function (win, doc) {
 		    selectorSplit = /\s?,\s?/,
 		    createUniqueObject, addRules, key,
 		    uniqueChildren = {}, uniqueBoxes = {},
-		    i, j, rule, k, l, selector, m, n, prop, boxes = [];
+		    i, j, rule, k, l, selector, m, n, prop;
 
 		createUniqueObject = function (selector, rules, prop, value) {
 			var unique, i, j, rule;
@@ -452,7 +453,7 @@ var Flexie = (function (win, doc) {
 
 		for (key in uniqueBoxes) {
 			if (uniqueBoxes.hasOwnProperty(key)) {
-				boxes.push(uniqueBoxes[key]);
+				POSSIBLE_FLEX_BOXES.push(uniqueBoxes[key]);
 			}
 		}
 
@@ -463,7 +464,7 @@ var Flexie = (function (win, doc) {
 		}
 
 		return {
-			boxes : boxes,
+			boxes : POSSIBLE_FLEX_BOXES,
 			children : POSSIBLE_FLEX_CHILDREN
 		};
 	}

@@ -900,11 +900,11 @@ var Flexie = (function (win, doc) {
 
 					if (f.match === x.match) {
 						if (f[spec] < x[spec]) {
-							filteredMatches[j] = x;
+							filteredMatches[k] = x;
 						}
 					
 						exists = TRUE;
-						return FALSE;
+						break;
 					}
 				}
 			

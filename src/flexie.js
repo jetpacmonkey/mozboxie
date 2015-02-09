@@ -899,7 +899,7 @@ var Flexie = (function (win, doc) {
 					f = filteredMatches[k];
 
 					if (f.match === x.match) {
-						if (f[spec] < x[spec]) {
+						if (f[spec] <= x[spec]) {
 							filteredMatches[k] = x;
 						}
 

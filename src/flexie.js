@@ -1964,7 +1964,8 @@ var Flexie = (function (win, doc) {
 				}
 			}
 
-			FLEX_BOXES = [];
+			POSSIBLE_FLEX_BOXES = [];
+			FLEX_BOXES = {};
 		}
 	};
 

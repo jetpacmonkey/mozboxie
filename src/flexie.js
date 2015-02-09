@@ -1916,6 +1916,8 @@ var Flexie = (function (win, doc) {
 			if (box && box._instance) {
 				box._instance.updateModel(box);
 			} else if (!box) {
+				params = params || {};
+				params.target = params.target || target;
 				box = new FLX.box(params);
 			}
 		} else {

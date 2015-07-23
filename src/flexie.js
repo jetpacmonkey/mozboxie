@@ -2037,4 +2037,4 @@ var Flexie = (function (win, doc) {
 	attachLoadMethod(FLX.init);
 
 	return FLX;
-}(this, document));
+}(window, document));

@@ -11,7 +11,7 @@ Description:
 
 License:
 	The MIT License
-	
+
 	Copyright (c) 2010 Richard Herrera
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -42,21 +42,21 @@ Class: Flexie
 /*global window, document */
 
 var Flexie = (function (win, doc) {
-	
+
 	// Scope public properties
 	var FLX = {},
-	
+
 	    // Each Flexie-modified DOM node gets a unique identifier
 	    FLX_DOM_ID = 0,
 	    FLX_DOM_ATTR = "data-flexie-id",
 	    FLX_PARENT_ATTR = "data-flexie-parent",
-	    
+
 	    // Store support for flexbox
 	    SUPPORT,
-	    
+
 	    // Store reference to engine
 	    ENGINE,
-	
+
 	    ENGINES = {
 			"NW" : {
 				s : "*.Dom.select"
@@ -93,10 +93,10 @@ var Flexie = (function (win, doc) {
 				m : "*.addOnLoad"
 			}
 		},
-	    
+
 	    // Store reference to library
 	    LIBRARY,
-	    
+
 	    // Regular Expressions
 	    PIXEL = /^-?\d+(?:px)?$/i,
 	    NUMBER = /^-?\d/,
@@ -109,7 +109,7 @@ var Flexie = (function (win, doc) {
 	    TRAILINGTRIM = /\s\s*$/,
 	    ONLY_WHITESPACE = /^\s*$/,
 	    CSS_SELECTOR = /\s?(\#|\.|\[|\:(\:)?[^first\-(line|letter)|before|after]+)/g,
-		
+
 	    // String constants
 	    EMPTY_STRING = "",
 	    SPACE_STRING = " ",
@@ -128,78 +128,78 @@ var Flexie = (function (win, doc) {
 	    BLOCK_AXIS = "block-axis",
 	    INHERIT = "inherit",
 	    LEFT = "left",
-		
+
 	    END_MUSTACHE = "}",
-		
+
 	    PREFIXES = " -o- -moz- -ms- -webkit- -khtml- ".split(SPACE_STRING),
-		
+
 	    DEFAULTS = {
 			orient : HORIZONTAL,
 			align : "stretch",
 			direction : INHERIT,
 			pack : "start"
 	    },
-	    
+
 	    // Global reference objects
 	    FLEX_BOXES = [],
 	    POSSIBLE_FLEX_CHILDREN = [],
 	    DOM_ORDERED,
-	    
+
 	    RESIZE_LISTENER,
-	    
+
 	    // Minification optimizations
 	    TRUE = true,
 	    FALSE = false,
 	    NULL = null,
 	    UNDEFINED,
-	    
+
 	    // If IE, which version?
 	    BROWSER = {
 			IE : (function () {
 				var ie, ua = win.navigator.userAgent,
 				    match = (MSIE).exec(ua.toLowerCase());
-			
+
 				if (match) {
 					ie = parseInt(match[2], 10);
 				}
-			
+
 				return ie;
 			}())
 	    },
-	    
+
 	    /*
-	    selectivizr v1.0.0 - (c) Keith Clark, freely distributable under the terms 
+	    selectivizr v1.0.0 - (c) Keith Clark, freely distributable under the terms
 	    of the MIT license.
-        
+
 	    selectivizr.com
 	    */
 	    selectivizrEngine;
-	
+
 	function trim (string) {
 		if (string) {
 			string = string.replace(LEADINGTRIM, EMPTY_STRING).replace(TRAILINGTRIM, EMPTY_STRING);
 		}
-		
+
 		return string;
 	}
-	
+
 	// --[ determineSelectorMethod() ]--------------------------------------
 	// walks through the engines object testing for an suitable
 	// selector engine.
-	
+
 	// Moving outside Selectivizr scope because detection is needed before running selectivizrEngine
 	function determineSelectorMethod() {
 		// compatiable selector engines in order of CSS3 support
 		var engines = ENGINES, method,
 			engine, obj;
-		
+
 		for (engine in engines) {
 			if (engines.hasOwnProperty(engine)) {
 				obj = engines[engine];
 
 				if (win[engine] && !method) {
 					method = eval(obj.s.replace("*", engine));
-					
+
 					if (method) {
 						ENGINE = engine;
 						break;
@@ -207,10 +207,10 @@ var Flexie = (function (win, doc) {
 				}
 			}
 		}
-		
+
 		return method;
 	}
-	
+
 	// Event handler for onload/onresize events
 	function addEvent(type, func) {
 		type = "on" + type;
@@ -227,17 +227,17 @@ var Flexie = (function (win, doc) {
 			};
 		}
 	}
-	
+
 	function attachLoadMethod(handler) {
 		if (!ENGINE) {
 			LIBRARY = determineSelectorMethod();
 		}
-		
+
 		// compatiable selector engines in order of CSS3 support
 		var engines = ENGINES,
 		    method, caller, args,
 		    engine, obj;
-		
+
 		for (engine in engines) {
 			if (engines.hasOwnProperty(engine)) {
 				obj = engines[engine];
@@ -246,7 +246,7 @@ var Flexie = (function (win, doc) {
 					method = eval(obj.m.replace("*", engine));
 					caller = obj.c ? eval(obj.c.replace("*", engine)) : win;
 					args = [];
-					
+
 					if (method && caller) {
 						if (obj.p) {
 							args.push(obj.p);
@@ -258,44 +258,44 @@ var Flexie = (function (win, doc) {
 				}
 			}
 		}
-		
+
 		if (!method) {
 			addEvent("load", handler);
 		}
 	}
-	
+
 	function buildSelector (node) {
 		var selector = node.nodeName.toLowerCase();
-		
+
 		if (node.id) {
 			selector += "#" + node.id;
 		} else if (node.FLX_DOM_ID) {
 			selector += "[" + FLX_DOM_ATTR + "='" + node.FLX_DOM_ID + "']";
 		}
-		
+
 		return selector;
 	}
-	
+
 	function setFlexieId (node) {
 		if (!node.FLX_DOM_ID) {
 			FLX_DOM_ID = (FLX_DOM_ID + 1);
-			
+
 			node.FLX_DOM_ID = FLX_DOM_ID;
 			node.setAttribute(FLX_DOM_ATTR, node.FLX_DOM_ID);
 		}
 	}
-	
+
 	function buildSelectorTree(text) {
 		var rules = [], ruletext, rule,
 		    match, selector, proptext, splitprop, properties,
 		    i, j, x;
-		
+
 		// Tabs, Returns
 		text = text.replace(WHITESPACE_CHARACTERS, EMPTY_STRING);
-		
+
 		// Leading / Trailing Whitespace
 		text = text.replace(/\s?(\{|\:|\})\s?/g, PLACEHOLDER_STRING);
-		
+
 		ruletext = text.split(END_MUSTACHE);
 
 		for (i in ruletext) {
@@ -304,19 +304,19 @@ var Flexie = (function (win, doc) {
 
 				if (text) {
 					rule = [text, END_MUSTACHE].join(EMPTY_STRING);
-					
+
 					match = (/(\@media[^\{]+\{)?(.*)\{(.*)\}/).exec(rule);
-					
+
 					if (match && match[3]) {
 						selector = match[2];
 						proptext = match[3].split(";");
 						properties = [];
-						
+
 						for (j in proptext) {
 							if (proptext.hasOwnProperty(j)) {
 								x = proptext[j];
 								splitprop = x.split(":");
-								
+
 								if (splitprop.length && splitprop[1]) {
 									properties.push({
 										property : splitprop[0],
@@ -325,7 +325,7 @@ var Flexie = (function (win, doc) {
 								}
 							}
 						}
-						
+
 						if (selector && properties.length) {
 							rules.push({
 								selector : selector,
@@ -336,10 +336,10 @@ var Flexie = (function (win, doc) {
 				}
 			}
 		}
-		
+
 		return rules;
 	}
-	
+
 	function findFlexboxElements(rules) {
 		var selectors, properties,
 		    property, value, shortProp,
@@ -347,7 +347,7 @@ var Flexie = (function (win, doc) {
 		    createUniqueObject, addRules, key,
 		    uniqueChildren = {}, uniqueBoxes = {},
 		    i, j, rule, k, l, selector, m, n, prop;
-		
+
 		createUniqueObject = function (selector, rules, prop, value) {
 			var unique, i, j, rule;
 
@@ -364,18 +364,18 @@ var Flexie = (function (win, doc) {
 					value : trim(rule.value)
 				});
 			}
-			
+
 			if (prop && value) {
 				unique[prop] = value;
 			}
-			
+
 			return unique;
 		};
-		
+
 		addRules = function (selector, rules, prop, value) {
 			var box = (prop && value) ? uniqueChildren[selector] : uniqueBoxes[selector],
 			    exists, x, i, j, rule, k, l;
-			
+
 			if (box) {
 				for (i = 0, j = rules.properties.length; i < j; i++) {
 					rule = rules.properties[i];
@@ -388,14 +388,14 @@ var Flexie = (function (win, doc) {
 							return false;
 						}
 					}
-					
+
 					if (exists) {
 						box.properties[exists] = rule;
 					} else {
 						box.properties.push(rule);
 					}
 				}
-				
+
 				if (prop && value) {
 					box[prop] = value;
 				}
@@ -461,13 +461,13 @@ var Flexie = (function (win, doc) {
 				POSSIBLE_FLEX_CHILDREN.push(uniqueChildren[key]);
 			}
 		}
-		
+
 		return {
 			boxes : FLEX_BOXES,
 			children : POSSIBLE_FLEX_CHILDREN
 		};
 	}
-	
+
 	function matchFlexChildren(parent, lib, possibleChildren) {
 		var caller, unique, matches = [],
 			i, j, child,
@@ -517,29 +517,29 @@ var Flexie = (function (win, doc) {
 			} else {
 				// Flag each unique node with FLX_DOM_ID
 				setFlexieId(child);
-				
+
 				matches.push({
 					match : child,
 					selector : buildSelector(child)
 				});
 			}
 		}
-		
+
 		return matches;
 	}
-	
+
 	function getParams(params) {
 		var key;
-		
+
 		for (key in params) {
 			if (params.hasOwnProperty(key)) {
 				params[key] = params[key] || DEFAULTS[key];
 			}
 		}
-		
+
 		return params;
 	}
-	
+
 	function buildFlexieCall(flexers) {
 		var selector, properties, property, value, shortProp,
 			display, orient, align, direction, pack,
@@ -549,7 +549,7 @@ var Flexie = (function (win, doc) {
 			flexieParentSelector = "[" + FLX_PARENT_ATTR + "]",
 			i, j, flex, k, l, prop,
 			target, key, m, n, child, o, p, existing;
-		
+
 		// No boxflex? No dice.
 		if (!flexers) {
 			return;
@@ -558,28 +558,28 @@ var Flexie = (function (win, doc) {
 		for (i = 0, j = flexers.boxes.length; i < j; i++) {
 			flex = flexers.boxes[i];
 			flex.selector = trim(flex.selector);
-			
+
 			selector = flex.selector;
 			properties = flex.properties;
-			
+
 			display = orient = align = direction = pack = NULL;
-			
+
 			for (k = 0, l = properties.length; k < l; k++) {
 				prop = properties[k];
 
 				property = trim(prop.property);
 				value = trim(prop.value);
-				
+
 				if (property) {
 					shortProp = property.replace("-moz-box-", EMPTY_STRING);
-					
+
 					switch (shortProp) {
 					case "display" :
 						if (value === "-moz-box") {
 							display = value;
 						}
 						break;
-						
+
 					case "orient" :
 						orient = value;
 						break;
@@ -598,16 +598,16 @@ var Flexie = (function (win, doc) {
 					}
 				}
 			}
-			
+
 			// Determine library
 			lib = LIBRARY;
-			
+
 			// Call it.
 			caller = lib(flex.selector);
-			
+
 			// In an array?
 			caller = caller[0] ? caller : [caller];
-			
+
 			for (k = 0, l = caller.length; k < l; k++) {
 				target = caller[k];
 
@@ -615,10 +615,10 @@ var Flexie = (function (win, doc) {
 				if (target.nodeType) {
 					// Flag each unique node with FLX_DOM_ID
 					setFlexieId(target);
-					
+
 					// Find possible child node matches
 					children = matchFlexChildren(target, lib, flexers.children);
-					
+
 					// Find any nested flexbox elements
 					nestedFlexboxes = selector + " " + flexieParentSelector;
 
@@ -649,12 +649,12 @@ var Flexie = (function (win, doc) {
 										match[key] += ", " + value;
 									}
 									break;
-								
+
 								case "children" :
 									for (m = 0, n = params[key].length; m < n; m++) {
 										child = params[key][m];
 										childMatch = FALSE;
-										
+
 										for (o = 0, p = match[key].length; o < p; o++) {
 											existing = match[key][o];
 
@@ -662,13 +662,13 @@ var Flexie = (function (win, doc) {
 												childMatch = TRUE;
 											}
 										}
-										
+
 										if (!childMatch) {
 											match[key].push(child);
 										}
 									}
 									break;
-									
+
 								default :
 									if (value) {
 										match[key] = value;
@@ -684,16 +684,16 @@ var Flexie = (function (win, doc) {
 				}
 			}
 		}
-		
+
 		DOM_ORDERED = LIBRARY(flexieParentSelector);
 		FLEX_BOXES = {};
-		
+
 		for (i = 0, j = DOM_ORDERED.length; i < j; i++) {
 			target = DOM_ORDERED[i];
 
 			FLEX_BOXES[target.FLX_DOM_ID] = flexboxes[target.FLX_DOM_ID];
 		}
-		
+
 		// Loop through each match, initialize constructor
 		for (key in FLEX_BOXES) {
 			if (FLEX_BOXES.hasOwnProperty(key)) {
@@ -707,12 +707,12 @@ var Flexie = (function (win, doc) {
 			}
 		}
 	}
-	
+
 	function calcPx(element, props, dir) {
 		var dim = dir.replace(dir.charAt(0), dir.charAt(0).toUpperCase()),
 		    value = element["offset" + dim] || 0,
 		    i, j, prop;
-		
+
 		if (value) {
 			for (i = 0, j = props.length; i < j; i++) {
 				prop = parseFloat(element.currentStyle[props[i]]);
@@ -722,10 +722,10 @@ var Flexie = (function (win, doc) {
 				}
 			}
 		}
-		
+
 		return value;
 	}
-	
+
 	function getTrueValue(element, name) {
 		var left, rsLeft,
 		    ret = element.currentStyle && element.currentStyle[name],
@@ -749,10 +749,10 @@ var Flexie = (function (win, doc) {
 
 		return ret;
 	}
-	
+
 	function unAuto(element, prop, name) {
 		var props;
-		
+
 		switch (name) {
 		case "width" :
 			props = [PADDING_LEFT, PADDING_RIGHT, BORDER_LEFT, BORDER_RIGHT];
@@ -771,29 +771,29 @@ var Flexie = (function (win, doc) {
 
 		return prop;
 	}
-	
+
 	function getPixelValue(element, prop, name) {
 		if (PIXEL.test(prop)) {
 			return prop;
 		}
-		
+
 		// if property is auto, do some messy appending
 		if (prop === "auto" || prop === "medium") {
 			prop = unAuto(element, prop, name);
 		} else {
 			prop = getTrueValue(element, name);
 		}
-		
+
 		return prop;
 	}
-	
+
 	function getComputedStyle(element, property, returnAsInt) {
 		var value;
-		
+
 		if (element === UNDEFINED) {
 			return;
 		}
-		
+
 		if (win.getComputedStyle) {
 			value = win.getComputedStyle(element, NULL)[property];
 		} else {
@@ -803,30 +803,30 @@ var Flexie = (function (win, doc) {
 				value = element.currentStyle[property];
 			}
 		}
-		
+
 		if (returnAsInt) {
 			value = parseInt(value, 10);
-			
+
 			if (isNaN(value)) {
 				value = 0;
 			}
 		}
-		
+
 		return value;
 	}
-	
+
 	function clientWidth(element) {
 		return element.innerWidth || element.clientWidth;
 	}
-	
+
 	function clientHeight(element) {
 		return element.innerHeight || element.clientHeight;
 	}
-	
+
 	function appendProperty(target, prop, value, prefixName) {
 		var cssText = [],
 			i, j, prefix;
-		
+
 		for (i = 0, j = PREFIXES.length; i < j; i++) {
 			prefix = PREFIXES[i];
 			cssText.push((prefixName ? prefix : EMPTY_STRING) + prop + ":" + (!prefixName ? prefix : EMPTY_STRING) + value);
@@ -835,11 +835,11 @@ var Flexie = (function (win, doc) {
 		target.style.cssText += cssText.join(";");
 		return target;
 	}
-	
+
 	function appendPixelValue(target, prop, value) {
 		var targets = target && target[0] ? target : [target],
 			i, j;
-		
+
 		for (i = 0, j = targets.length; i < j; i++) {
 			target = targets[i];
 
@@ -848,24 +848,24 @@ var Flexie = (function (win, doc) {
 			}
 		}
 	}
-	
+
 	function calculateSpecificity (selector) {
 		var selectorGrid, matrix, total,
 			i, j, chunk;
-		
+
 		selectorGrid = selector.replace(CSS_SELECTOR, function (e, f) {
 			return "%" + f;
 		}).replace(/\s|\>|\+|\~/g, "%").split(/%/g);
-		
+
 		matrix = {
 			_id : 100,
 			_class : 10,
 			_tag : 1
 		};
-		
+
 		// Start with rule index position
 		total = 0;
-		
+
 		// Add each selector value to total.
 		for (i = 0, j = selectorGrid.length; i < j; i++) {
 			chunk = selectorGrid[i];
@@ -878,23 +878,23 @@ var Flexie = (function (win, doc) {
 				total += matrix._tag;
 			}
 		}
-		
+
 		return total;
 	}
-	
+
 	function filterDuplicates (matches, children, type) {
 		var filteredMatches = [], exists,
 		    spec = (type ? "ordinal" : "flex") + "Specificity",
 		    i, j, x, k, l, f;
-		
+
 		for (i = 0, j = matches.length; i < j; i++) {
 			x = matches[i];
 
 			if ((!type && x.flex) || (type && x["ordinal-group"])) {
 				x[spec] = x[spec] || calculateSpecificity(x.selector);
-				
+
 				exists = FALSE;
-			
+
 				for (k = 0, l = filteredMatches.length; k < l; k++) {
 					f = filteredMatches[k];
 
@@ -902,27 +902,27 @@ var Flexie = (function (win, doc) {
 						if (f[spec] < x[spec]) {
 							filteredMatches[j] = x;
 						}
-					
+
 						exists = TRUE;
 						return FALSE;
 					}
 				}
-			
+
 				if (!exists) {
 					filteredMatches.push(x);
 				}
 			}
 		}
-		
+
 		return filteredMatches;
 	}
-	
+
 	function createMatchMatrix(matches, children, type) {
 		var groups = {}, keys = [], totalRatio = 0,
 			group, order = "ordinal-group",
 			BoxOrdinalAttr = "data-" + order,
 			i, j, kid, k, l, x, key;
-		
+
 		// Filter dupes
 		matches = filterDuplicates(matches, children, type);
 
@@ -935,17 +935,17 @@ var Flexie = (function (win, doc) {
 				if (type) {
 					// If no value declared, it's the default.
 					group = x[order] || "1";
-					
+
 					if (x.match === kid) {
 						x.match.setAttribute(BoxOrdinalAttr, group);
-						
+
 						groups[group] = groups[group] || [];
 						groups[group].push(x);
 					}
 				} else {
 					// If no value declared, it's the default.
 					group = x.flex || "0";
-					
+
 					if (x.match === kid && (!x[group] || (x[group] && parseInt(x[group], 10) <= 1))) {
 						totalRatio += parseInt(group, 10);
 
@@ -954,11 +954,11 @@ var Flexie = (function (win, doc) {
 					}
 				}
 			}
-			
+
 			if (type && !kid.getAttribute(BoxOrdinalAttr)) {
 				group = "1";
 				kid.setAttribute(BoxOrdinalAttr, group);
-				
+
 				groups[group] = groups[group] || [];
 				groups[group].push({
 					match : kid
@@ -982,7 +982,7 @@ var Flexie = (function (win, doc) {
 			total : totalRatio
 		};
 	}
-	
+
 	function attachResizeListener(construct, params) {
 		if (!RESIZE_LISTENER) {
 			var storedWidth, storedHeight,
@@ -992,7 +992,7 @@ var Flexie = (function (win, doc) {
 			    resizeTimer,
 			    innerWidth = "innerWidth", innerHeight = "innerHeight",
 			    clientWidth = "clientWidth", clientHeight = "clientHeight";
-			
+
 			addEvent("resize", function () {
 				if (resizeTimer) {
 					window.clearTimeout(resizeTimer);
@@ -1001,42 +1001,42 @@ var Flexie = (function (win, doc) {
 				resizeTimer = window.setTimeout(function () {
 					currentWidth = win[innerWidth] || docEl[innerWidth] || docEl[clientWidth] || docBody[clientWidth];
 					currentHeight = win[innerHeight] || docEl[innerHeight] || docEl[clientHeight] || docBody[clientHeight];
-					
+
 					if (storedWidth !== currentWidth || storedHeight !== currentHeight) {
 						FLX.updateInstance(NULL, NULL);
-						
+
 						storedWidth = currentWidth;
 						storedHeight = currentHeight;
 					}
 				}, 250);
 			});
-			
+
 			RESIZE_LISTENER = TRUE;
 		}
 	}
-	
+
 	function cleanPositioningProperties (children) {
 		var i, j, kid, w, h;
-		
+
 		for (i = 0, j = children.length; i < j; i++) {
 			kid = children[i];
 
 			w = kid.style.width;
 			h = kid.style.height;
-			
+
 			kid.style.cssText = EMPTY_STRING;
-			
+
 			kid.style.width = w;
 			kid.style.height = h;
 		}
 	}
-	
+
 	function sanitizeChildren (target, nodes) {
 		var children = [], node, i, j;
-		
+
 		for (i = 0, j = nodes.length; i < j; i++) {
 			node = nodes[i];
-			
+
 			if (node) {
 				switch (node.nodeName.toLowerCase()) {
 				case "script" :
@@ -1055,40 +1055,40 @@ var Flexie = (function (win, doc) {
 				}
 			}
 		}
-		
+
 		return children;
 	}
-	
+
 	function parentFlex (target) {
 		var totalFlex = 0,
 		    parent = target.parentNode,
 		    obj,
 		    matrix,
 		    isNested;
-		
+
 		while (parent.FLX_DOM_ID) {
 			obj = FLEX_BOXES[parent.FLX_DOM_ID];
 			matrix = createMatchMatrix(obj.children, sanitizeChildren(parent, parent.childNodes), NULL);
-			
+
 			totalFlex += matrix.total;
 			isNested = TRUE;
-			
+
 			parent = parent.parentNode;
 		}
-		
+
 		return {
 			nested : isNested,
 			flex : totalFlex
 		};
 	}
-	
+
 	function dimensionValues (target, prop) {
 		var parent = target.parentNode,
 		    obj, dimension, i, j, rule;
-		
+
 		if (parent.FLX_DOM_ID) {
 			obj = FLEX_BOXES[parent.FLX_DOM_ID];
-			
+
 			for (i = 0, j = obj.properties.length; i < j; i++) {
 				rule = obj.properties[i];
 
@@ -1098,10 +1098,10 @@ var Flexie = (function (win, doc) {
 				}
 			}
 		}
-		
+
 		return dimension;
 	}
-	
+
 	function updateChildValues (params) {
 		var i, j, x;
 
@@ -1111,57 +1111,57 @@ var Flexie = (function (win, doc) {
 				x.flex = params.flexMatrix[i];
 			}
 		}
-		
+
 		if (params.ordinalMatrix) {
 			for (i = 0, j = params.children.length; i < j; i++) {
 				x = params.children[i];
 				x["ordinal-group"] = params.ordinalMatrix[i];
 			}
 		}
-		
+
 		return params;
 	}
-	
+
 	function ensureStructuralIntegrity (params, instance) {
 		var target = params.target;
-		
+
 		if (!target.FLX_DOM_ID) {
 			target.FLX_DOM_ID = target.FLX_DOM_ID || (++FLX_DOM_ID);
 		}
-		
+
 		if (!params.nodes) {
 			params.nodes = sanitizeChildren(target, target.childNodes);
 		}
-		
+
 		if (!params.selector) {
 			params.selector = buildSelector(target);
 			target.setAttribute(FLX_PARENT_ATTR, TRUE);
 		}
-		
+
 		if (!params.properties) {
 			params.properties = [];
 		}
-		
+
 		if (!params.children) {
 			params.children = matchFlexChildren(target, LIBRARY, sanitizeChildren(target, target.childNodes));
 		}
-		
+
 		if (!params.nested) {
 			params.nested = params.selector + " [" + FLX_PARENT_ATTR + "]";
 		}
-		
+
 		params.target = target;
 		params._instance = instance;
-		
+
 		return params;
 	}
-	
+
 	selectivizrEngine = (function () {
 		var RE_COMMENT = /(\/\*[^*]*\*+([^\/][^*]*\*+)*\/)\s*?/g,
 			RE_IMPORT = /@import\s*(?:(?:(?:url\(\s*(['"]?)(.*)\1)\s*\))|(?:(['"])(.*)\3))\s*([^;]*);/g,
 			RE_ASSET_URL = /(behavior\s*?:\s*)?\burl\(\s*(["']?)(?!data:)([^"')]+)\2\s*\)/g,
 			RE_SELECTOR_GROUP = /((?:^|(?:\s*\})+)(?:\s*@media[^\{]+\{)?)\s*([^\{]*?[\[:][^{]+)/g,
-			
+
 			// Whitespace normalization regexp's
 			RE_TIDY_TRAILING_WHITESPACE = /([(\[+~])\s+/g,
 			RE_TIDY_LEADING_WHITESPACE = /\s+([)\]+~])/g,
@@ -1193,27 +1193,27 @@ var Flexie = (function (win, doc) {
 			return cssText.replace(RE_SELECTOR_GROUP, function (m, prefix, selectorText) {
 				var selectorGroups, selector,
 					i, j, group;
-				
+
 				selectorGroups = selectorText.split(",");
-				
+
 				for (i = 0, j = selectorGroups.length; i < j; i++) {
 					group = selectorGroups[i];
 					selector = normalizeSelectorWhitespace(group) + SPACE_STRING;
 				}
-				
+
 				return prefix + selectorGroups.join(",");
 			});
 		}
-		
+
 		// --[ getXHRObject() ]-------------------------------------------------
 		function getXHRObject() {
 			if (win.XMLHttpRequest) {
 				return new win.XMLHttpRequest();
 			}
-			
-			try	{ 
+
+			try	{
 				return new win.ActiveXObject("Microsoft.XMLHTTP");
-			} catch (e) { 
+			} catch (e) {
 				return NULL;
 			}
 		}
@@ -1236,12 +1236,12 @@ var Flexie = (function (win, doc) {
 
 			return stylesheets.join("\n\n");
 		}
-		
+
 		// --[ loadStyleSheet() ]-----------------------------------------------
 		function loadStyleSheet(url) {
 			var xhr = getXHRObject(),
 				responseText;
-			
+
 			xhr.open("GET", url, FALSE);
 			xhr.send();
 
@@ -1253,17 +1253,17 @@ var Flexie = (function (win, doc) {
 
 			return responseText;
 		}
-		
+
 		// --[ resolveUrl() ]---------------------------------------------------
 		// Converts a URL fragment to a fully qualified URL using the specified
 		// context URL. Returns null if same-origin policy is broken
 		function resolveUrl(url, contextUrl) {
-			
+
 			// IE9 returns a false positive sometimes(?)
 			if (!url) {
 				return;
 			}
-			
+
 			function getProtocolAndHost(url) {
 				return url.substring(0, url.indexOf("/", 8));
 			}
@@ -1286,7 +1286,7 @@ var Flexie = (function (win, doc) {
 
 			return contextUrlPath + url;
 		}
-		
+
 		// --[ parseStyleSheet() ]----------------------------------------------
 		// Downloads the stylesheet specified by the URL, removes it's comments
 		// and recursivly replaces @import rules with their contents, ultimately
@@ -1298,14 +1298,14 @@ var Flexie = (function (win, doc) {
 					var cssText = parseStyleSheet(resolveUrl(importUrl || importUrl2, url));
 					return (media) ? "@media " + media + " {" + cssText + "}" : cssText;
 				}).
-				replace(RE_ASSET_URL, function( match, isBehavior, quoteChar, assetUrl ) { 
+				replace(RE_ASSET_URL, function( match, isBehavior, quoteChar, assetUrl ) {
 					quoteChar = quoteChar || EMPTY_STRING;
-					return isBehavior ? match : " url(" + quoteChar + resolveUrl(assetUrl, url, true) + quoteChar + ") "; 
+					return isBehavior ? match : " url(" + quoteChar + resolveUrl(assetUrl, url, true) + quoteChar + ") ";
 				});
 			}
 			return EMPTY_STRING;
 		}
-		
+
 		// --[ init() ]---------------------------------------------------------
 		return function () {
 			// honour the <base> tag
@@ -1314,7 +1314,7 @@ var Flexie = (function (win, doc) {
 			    baseUrl = (baseTags.length > 0) ? baseTags[0].href : doc.location.href,
 			    externalStyles = doc.styleSheets,
 			    cssText, tree, flexers;
-			
+
 			for (i = 0, j = externalStyles.length; i < j; i++) {
 				stylesheet = externalStyles[i];
 
@@ -1342,16 +1342,16 @@ var Flexie = (function (win, doc) {
 					}
 				}
 			}
-			
+
 			buildFlexieCall(flexers);
 		};
 	}());
-	
+
 	// Flexie box constructor
 	FLX.box = function (params) {
 		return this.renderModel(params);
 	};
-	
+
 	FLX.box.prototype = {
 		properties : {
 			boxModel : function (target, children, params) {
@@ -1359,7 +1359,7 @@ var Flexie = (function (win, doc) {
 					i, j, selector;
 
 				target.style.display = "block";
-				
+
 				if (BROWSER.IE === 8) {
 					target.style.overflow = "hidden";
 				}
@@ -1371,14 +1371,14 @@ var Flexie = (function (win, doc) {
 					stylesheet = doc.styleSheets;
 					stylesheet = stylesheet[stylesheet.length - 1];
 					paddingFix = "padding-top:" + (getComputedStyle(target, PADDING_TOP, NULL) || "0.1px;");
-				
+
 					generatedRules = [
 						"content: '.'",
 						"display: block",
 						"height: 0",
 						"overflow: hidden"
 					].join(";");
-				
+
 					for (i = 0, j = selectors.length; i < j; i++) {
 						selector = selectors[i];
 
@@ -1401,15 +1401,15 @@ var Flexie = (function (win, doc) {
 							stylesheet.insertRule(selector + ":after{" + generatedRules + ";clear:both;}", 0);
 						}
 					}
-					
+
 					params.cleared = TRUE;
 				}
 			},
-			
+
 			boxDirection : function (target, children, params) {
 				var nestedSelector, nested,
 					i, j, kid, node;
-				
+
 				if ((params.direction === "reverse" && !params.reversed) || (params.direction === "normal" && params.reversed)) {
 					children = children.reverse();
 
@@ -1417,16 +1417,16 @@ var Flexie = (function (win, doc) {
 						kid = children[i];
 						target.appendChild(kid);
 					}
-					
+
 					// box-direction is inheritable.
 					// We need to see if there are any nested flexbox elements
 					nestedSelector = LIBRARY(params.nested);
-					
+
 					for (i = 0, j = nestedSelector.length; i < j; i++) {
 						node = nestedSelector[i];
 
 						nested = FLEX_BOXES[node.FLX_DOM_ID];
-						
+
 						if (nested && nested.direction === INHERIT) {
 							nested.direction = params.direction;
 						}
@@ -1435,7 +1435,7 @@ var Flexie = (function (win, doc) {
 					params.reversed = !params.reversed;
 				}
 			},
-			
+
 			boxOrient : function (target, children, params) {
 				var self = this, wide, high,
 					i, j, kid;
@@ -1467,7 +1467,7 @@ var Flexie = (function (win, doc) {
 						if (params.orient === VERTICAL || params.orient === BLOCK_AXIS) {
 							kid.style.clear = LEFT;
 						}
-						
+
 						if (BROWSER.IE === 6) {
 							kid.style.display = "inline";
 						}
@@ -1480,14 +1480,14 @@ var Flexie = (function (win, doc) {
 					self.props = high;
 					self.anti = wide;
 					break;
-				
+
 				default :
 					self.props = wide;
 					self.anti = high;
 					break;
 				}
 			},
-			
+
 			boxOrdinalGroup : function (target, children, params) {
 				var organizeChildren,
 				    matrix;
@@ -1495,7 +1495,7 @@ var Flexie = (function (win, doc) {
 				if (!children.length) {
 					return;
 				}
-				
+
 				organizeChildren = function (matrix) {
 					var keys = matrix.keys,
 						iterator = params.reversed ? keys : keys.reverse(),
@@ -1520,7 +1520,7 @@ var Flexie = (function (win, doc) {
 					organizeChildren(matrix);
 				}
 			},
-			
+
 			boxFlex : function (target, children, params) {
 				var self = this,
 				    testForRestrictiveProperties,
@@ -1534,20 +1534,20 @@ var Flexie = (function (win, doc) {
 				if (!children.length) {
 					return;
 				}
-				
+
 				testForRestrictiveProperties = function (matrix) {
 					var flexers = matrix.groups,
 					    keys = matrix.keys,
 					    max, i, j, key,
 					    k, l, x, m, n, rule;
-					
+
 					for (i = 0, j = keys.length; i < j; i++) {
 						key = keys[i];
 
 						for (k = 0, l = flexers[key].length; k < l; k++) {
 							x = flexers[key][k];
 							max = NULL;
-							
+
 							for (m = 0, n = x.properties.length; m < n; m++) {
 								rule = x.properties[m];
 
@@ -1555,11 +1555,11 @@ var Flexie = (function (win, doc) {
 									max = parseFloat(rule.value);
 								}
 							}
-							
+
 							if (!max || x.match[self.props.out] > max) {
 								appendPixelValue(x.match, self.props.pos, NULL);
 							}
-							
+
 						}
 					}
 				};
@@ -1575,24 +1575,24 @@ var Flexie = (function (win, doc) {
 						kid = children[i];
 
 						groupDimension += getComputedStyle(kid, self.props.dim, TRUE);
-						
+
 						for (k = 0, l = self.props.pad.length; k < l; k++) {
 							pad = self.props.pad[k];
 
 							groupDimension += getComputedStyle(kid, pad, TRUE);
 						}
-						
+
 						groupDimension += getComputedStyle(kid, self.props.pos, TRUE);
 						groupDimension += getComputedStyle(kid, self.props.opp, TRUE);
 					}
 
 					whitespace = target[self.props.out] - groupDimension;
-					
+
 					for (i = 0, j = self.props.pad.length; i < j; i++) {
 						pad = self.props.pad[i];
 						whitespace -= getComputedStyle(target, pad, TRUE);
 					}
-					
+
 					ration = (whitespace / matrix.total);
 
 					return {
@@ -1623,7 +1623,7 @@ var Flexie = (function (win, doc) {
 								if (!flex || (specificity <= x.flexSpecificity)) {
 									x.match.setAttribute("data-flex", key);
 									x.match.setAttribute("data-specificity", x.flexSpecificity);
-									
+
 									trueDim = getComputedStyle(x.match, self.props.dim, TRUE);
 									newDimension = Math.max(0, (trueDim + widthRation));
 									appendPixelValue(x.match, self.props.dim, newDimension);
@@ -1637,29 +1637,29 @@ var Flexie = (function (win, doc) {
 
 				if (matrix.total) {
 					params.hasFlex = TRUE;
-					
+
 					restrict = testForRestrictiveProperties(matrix);
 					whitespace = findTotalWhitespace(matrix);
-				
+
 					// Distribute the calculated ratios among the children
 					distro = distributeRatio(matrix, whitespace);
 				}
 			},
-			
+
 			boxAlign : function (target, children, params) {
 				var self = this,
 				    targetDimension,
 				    kidDimension,
 				    flexCheck = parentFlex(target),
 				    i, j, pad, k, l, kid;
-				
+
 				if (!SUPPORT && !flexCheck.flex && (params.orient === VERTICAL || params.orient === BLOCK_AXIS)) {
 					if (!dimensionValues(target, self.anti.dim)) {
 						appendPixelValue(target, self.anti.dim, NULL);
 					}
 					appendPixelValue(children, self.anti.dim, NULL);
 				}
-				
+
 				// Remove padding / border from target dimension
 				targetDimension = target[self.anti.out];
 
@@ -1671,7 +1671,7 @@ var Flexie = (function (win, doc) {
 				switch (params.align) {
 				case "start" :
 					break;
-				
+
 				case "end" :
 					for (i = 0, j = children.length; i < j; i++) {
 						kid = children[i];
@@ -1690,7 +1690,7 @@ var Flexie = (function (win, doc) {
 						appendPixelValue(kid, self.anti.pos, kidDimension);
 					}
 					break;
-				
+
 				default :
 					for (i = 0, j = children.length; i < j; i++) {
 						kid = children[i];
@@ -1726,7 +1726,7 @@ var Flexie = (function (win, doc) {
 
 							kidDimension -= getComputedStyle(kid, self.anti.opp, TRUE);
 							kidDimension = Math.max(0, kidDimension);
-							
+
 							appendPixelValue(kid, self.anti.dim, kidDimension);
 							break;
 						}
@@ -1734,7 +1734,7 @@ var Flexie = (function (win, doc) {
 					break;
 				}
 			},
-			
+
 			boxPack : function (target, children, params) {
 				var self = this,
 				    groupDimension = 0,
@@ -1757,13 +1757,13 @@ var Flexie = (function (win, doc) {
 
 				firstComputedMargin = getComputedStyle(children[0], self.props.pos, TRUE);
 				totalDimension = target[self.props.out] - groupDimension;
-				
+
 				// Remove padding / border from target dimension
 				for (i = 0, j = self.props.pad.length; i < j; i++) {
 					pad = self.props.pad[i];
 					totalDimension -= getComputedStyle(target, pad, TRUE);
 				}
-				
+
 				// If totalDimension is less than 0, we have a problem...
 				if (totalDimension < 0) {
 					totalDimension = Math.max(0, totalDimension);
@@ -1778,16 +1778,16 @@ var Flexie = (function (win, doc) {
 					if (targetPadding) {
 						targetPadding /= 2;
 					}
-					
+
 					appendPixelValue(children[0], self.props.pos, targetPadding + firstComputedMargin + Math.floor(totalDimension / 2));
 					break;
 
 				case "justify" :
 					fractionedDimension = Math.floor((targetPadding + totalDimension) / length);
 					remainder = (fractionedDimension * length) - totalDimension;
-					
+
 					i = children.length - 1;
-					
+
 					while (i) {
 						kid = children[i];
 						currentDimension = fractionedDimension;
@@ -1796,16 +1796,16 @@ var Flexie = (function (win, doc) {
 							currentDimension++;
 							remainder++;
 						}
-						
+
 						value = getComputedStyle(kid, self.props.pos, TRUE) + currentDimension;
 						appendPixelValue(kid, self.props.pos, value);
-						
+
 						i--;
 					}
-					
+
 					break;
 				}
-				
+
 				target.style.overflow = "";
 			}
 		},
@@ -1813,18 +1813,18 @@ var Flexie = (function (win, doc) {
 		setup : function (target, children, params) {
 			var self = this, matrix, flexCheck,
 				key, func;
-			
+
 			if (!target || !children || !params) {
 				return;
 			}
-			
+
 			if (SUPPORT && SUPPORT.partialSupport) {
 				matrix = createMatchMatrix(params.children, children, NULL);
 				flexCheck = parentFlex(target);
 				children = sanitizeChildren(target, target.childNodes);
-				
+
 				self.properties.boxOrient.call(self, target, children, params);
-				
+
 				if (!matrix.total || !LIBRARY(params.nested).length) {
 					if ((params.align === "stretch") && !SUPPORT.boxAlignStretch && (!flexCheck.nested || !flexCheck.flex)) {
 						self.properties.boxAlign.call(self, target, children, params);
@@ -1852,10 +1852,10 @@ var Flexie = (function (win, doc) {
 			var self = this,
 			    target = params.target,
 			    children = params.nodes;
-			
+
 			// Null properties
 			cleanPositioningProperties(children);
-			
+
 			if (params.flexMatrix || params.ordinalMatrix) {
 				params = updateChildValues(params);
 			}
@@ -1868,49 +1868,49 @@ var Flexie = (function (win, doc) {
 			var self = this,
 			    target = params.target,
 			    nodes = target.childNodes;
-			
+
 			// Sanity check.
 			if (!target.length && !nodes) {
 				return false;
 			}
-			
+
 			params = ensureStructuralIntegrity(params, this);
-			
+
 			// Setup properties
 			self.updateModel(params);
-			
+
 			// Resize / DOM Polling Events
 			// Delay for an instant because IE6 is insane.
 			win.setTimeout(function () {
 				self.trackDOM(params);
 			}, 0);
-			
+
 			return self;
 		},
-		
+
 		bubbleUp : function (target, params) {
 			var self = this, flex,
 			    parent = params.target.parentNode;
-			
+
 			while (parent) {
 				flex = FLEX_BOXES[parent.FLX_DOM_ID];
-				
+
 				if (flex) {
 					cleanPositioningProperties(flex.nodes);
 					self.setup(flex.target, flex.nodes, flex);
 				}
-				
+
 				parent = parent.parentNode;
 			}
 		}
 	};
-	
+
 	FLX.updateInstance = function (target, params) {
 		var box, key;
-		
+
 		if (target) {
 			box = FLEX_BOXES[target.FLX_DOM_ID];
-			
+
 			if (box && box._instance) {
 				box._instance.updateModel(box);
 			} else if (!box) {
@@ -1928,27 +1928,27 @@ var Flexie = (function (win, doc) {
 			}
 		}
 	};
-	
+
 	FLX.getInstance = function (target) {
 		return FLEX_BOXES[target.FLX_DOM_ID];
 	};
-	
+
 	FLX.destroyInstance = function (target) {
 		var box, destroy, i, j, x, key;
-		
+
 		destroy = function (box) {
 			box.target.FLX_DOM_ID = NULL;
 			box.target.style.cssText = EMPTY_STRING;
-			
+
 			for (i = 0, j = box.children.length; i < j; i++) {
 				x = box.children[i];
 				x.match.style.cssText = EMPTY_STRING;
 			}
 		};
-		
+
 		if (target) {
 			box = FLEX_BOXES[target.FLX_DOM_ID];
-			
+
 			if (box) {
 				destroy(box);
 			}
@@ -1958,7 +1958,7 @@ var Flexie = (function (win, doc) {
 					destroy(FLEX_BOXES[key]);
 				}
 			}
-			
+
 			FLEX_BOXES = [];
 		}
 	};
@@ -1980,42 +1980,42 @@ var Flexie = (function (win, doc) {
 
 		doc.body.appendChild(dummy);
 		childHeight = dummy.firstChild.offsetHeight;
-		
+
 		tests = {
 			boxAlignStretch : function () {
 				return (childHeight === 100);
 			},
-			
+
 			boxPackJustify : function () {
 				var totalOffset = 0,
 					i, j;
-				
+
 				for (i = 0, j = dummy.childNodes.length; i < j; i++) {
 					totalOffset += dummy.childNodes[i].offsetLeft;
 				}
-				
+
 				return (totalOffset === 135);
 			}
 		};
-		
+
 		for (key in tests) {
 			if (tests.hasOwnProperty(key)) {
 				value = tests[key];
 
 				result = value();
-				
+
 				if (!result) {
 					partialSupportGrid.partialSupport = TRUE;
 				}
-				
+
 				partialSupportGrid[key] = result;
 			}
 		}
-		
+
 		doc.body.removeChild(dummy);
 		return ~ (dummy.style.display).indexOf("-moz-box") ? partialSupportGrid : FALSE;
 	};
-	
+
 	FLX.init = function () {
 		FLX.flexboxSupported = SUPPORT = FLX.flexboxSupport();
 
@@ -2023,12 +2023,12 @@ var Flexie = (function (win, doc) {
 			selectivizrEngine();
 		}
 	};
-	
+
 	// Flexie Version
 	FLX.version = "1.0.3";
 
 	// Load when the DOM is ready
 	attachLoadMethod(FLX.init);
-	
+
 	return FLX;
-}(this, document));
+}(window, document));

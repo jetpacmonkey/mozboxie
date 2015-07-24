@@ -2034,7 +2034,7 @@ var Flexie = (function (win, doc) {
 	FLX.version = "1.0.3";
 
 	// Load when the DOM is ready
-	attachLoadMethod(FLX.init);
+	 attachLoadMethod(FLX.init);
 
 	return FLX;
 }(window, document));
